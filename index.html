@@ -465,18 +465,21 @@ window.doLogin = async function() {
   const btn = document.getElementById("loginBtn");
   err.style.display = "none";
   if (!username || !password) {
+    alert("Please enter username and password.");
     err.style.display = "block"; err.textContent = "Please enter username and password."; return;
   }
   btn.textContent = "CHECKING..."; btn.style.opacity = "0.7";
   try {
-    // Try to get user doc from Firestore "users" collection
+    alert("Connecting to Firebase... username=" + username);
     const userDoc = await getDoc(doc(db, "users", username));
+    alert("Got response. Exists=" + userDoc.exists());
     if (!userDoc.exists()) {
       err.style.display="block"; err.textContent="Username not found.";
+      alert("Username not found in database.");
     } else {
       const data = userDoc.data();
+      alert("Found user. Checking password... stored=" + data.password + " entered=" + password);
       if (data.password === password && data.active !== false) {
-        // Save session (8 hours)
         sessionStorage.setItem("mt_auth", JSON.stringify({
           username: data.displayName || username,
           role: data.role || "staff",
@@ -487,10 +490,12 @@ window.doLogin = async function() {
         err.style.display="block"; err.textContent="Account disabled. Contact admin.";
       } else {
         err.style.display="block"; err.textContent="Wrong password. Please try again.";
+        alert("Wrong password. stored=" + data.password + " entered=" + password);
       }
     }
   } catch(e) {
-    err.style.display="block"; err.textContent="Connection error. Check internet.";
+    alert("ERROR: " + e.message + " | " + e.code);
+    err.style.display="block"; err.textContent="Error: " + e.message;
   }
   btn.textContent="LOGIN"; btn.style.opacity="1";
 };
