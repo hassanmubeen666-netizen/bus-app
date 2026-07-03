@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Open your ledger — Bustrip Fleet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Space+Mono:wght@400;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F3EEE0; --paper-line:#E7DFC9; --ink:#201F28; --ink-soft:#5B5A54;
+    --margin:#A8402F; --rule:#93A6A0; --profit:#2E7D46; --loss:#B23B2E;
+    --seal:#B4842A; --seal-deep:#93691D; --radius:10px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{ background:var(--paper); color:var(--ink); font-family:'Work Sans',sans-serif; -webkit-font-smoothing:antialiased; min-height:100vh; }
+  h1,h2,h3{ font-family:'Zilla Slab', serif; font-weight:600; letter-spacing:-0.01em; }
+  .mono{ font-family:'Space Mono', monospace; }
+  a{ color:inherit; text-decoration:none; }
+  .wrap{ max-width:1140px; margin:0 auto; padding:0 28px; }
+  .skip{ position:absolute; left:-999px; top:0; background:var(--ink); color:var(--paper); padding:10px 16px; z-index:200; }
+  .skip:focus{ left:12px; top:12px; }
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible{ outline:3px solid var(--margin); outline-offset:2px; }
+  @media (prefers-reduced-motion: reduce){ *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; } }
+
+  .ledger-margin{ position:fixed; left:0; top:0; bottom:0; width:64px; z-index:1; pointer-events:none; border-right:2px solid var(--margin); }
+  .ledger-margin::after{ content:""; position:absolute; left:14px; top:0; bottom:0; width:1px; background-image:repeating-linear-gradient(var(--margin) 0 4px, transparent 4px 9px); opacity:0.55; }
+  main, header{ margin-left:64px; }
+  @media (max-width:760px){ .ledger-margin{ display:none; } main, header{ margin-left:0; } }
+
+  header{ background:var(--paper); border-bottom:2px solid var(--ink); }
+  .nav{ display:flex; align-items:center; justify-content:space-between; height:72px; }
+  .logo{ display:flex; align-items:center; gap:10px; font-family:'Zilla Slab'; font-weight:700; font-size:22px; }
+  .logo .ledger-mark{ width:22px; height:22px; border:2px solid var(--ink); border-radius:3px; position:relative; }
+  .logo .ledger-mark::before,.logo .ledger-mark::after{ content:""; position:absolute; left:4px; right:4px; height:1.5px; background:var(--ink); }
+  .logo .ledger-mark::before{ top:7px; } .logo .ledger-mark::after{ top:12px; }
+  .back{ font-family:'Space Mono'; font-size:13px; color:var(--ink-soft); display:flex; align-items:center; gap:8px; }
+  .back:hover{ color:var(--ink); }
+
+  main{ padding:60px 0 90px; }
+  .split{ display:grid; grid-template-columns:0.92fr 1.08fr; gap:56px; align-items:start; }
+
+  .eyebrow{ font-family:'Space Mono'; font-size:12px; letter-spacing:0.1em; color:var(--ink-soft); display:flex; align-items:center; gap:10px; margin-bottom:16px; text-transform:uppercase; }
+  .eyebrow::before{ content:""; width:24px; height:2px; background:var(--margin); }
+  .pitch h1{ font-size:clamp(30px,3.6vw,42px); line-height:1.05; margin-bottom:18px; }
+  .pitch p.lede{ color:var(--ink-soft); font-size:16px; line-height:1.6; max-width:44ch; margin-bottom:34px; }
+
+  .checklist{ display:flex; flex-direction:column; gap:0; border-top:1px solid var(--paper-line); }
+  .check-row{ display:flex; gap:14px; padding:16px 0; border-bottom:1px solid var(--paper-line); align-items:flex-start; }
+  .check-row .mark{ width:20px; height:20px; border-radius:50%; border:2px solid var(--profit); color:var(--profit); flex:none; display:flex; align-items:center; justify-content:center; font-size:12px; font-family:'Space Mono'; margin-top:2px; }
+  .check-row h3{ font-size:15px; font-family:'Work Sans'; font-weight:600; margin-bottom:3px; }
+  .check-row p{ font-size:13.5px; color:var(--ink-soft); line-height:1.5; }
+
+  .quote{ margin-top:34px; padding:20px 22px; border:1.5px dashed var(--rule); border-radius:10px; background:#FBF8EE; }
+  .quote p{ font-size:14px; line-height:1.6; color:var(--ink-soft); margin-bottom:10px; font-style:italic; }
+  .quote .who{ font-family:'Space Mono'; font-size:12px; color:var(--ink-soft); }
+
+  /* ── form ledger card ─────────────────────────────────────────── */
+  .ledger{ background:#FBF8EE; border:2px solid var(--ink); border-radius:var(--radius); box-shadow:7px 7px 0 var(--rule); }
+  .ledger-head{ display:flex; justify-content:space-between; align-items:center; padding:16px 26px; border-bottom:2px solid var(--ink); background:var(--paper-line); }
+  .ledger-head .mono{ font-size:11px; color:var(--ink-soft); letter-spacing:0.06em; }
+  .ledger-head .title{ font-family:'Zilla Slab'; font-weight:700; font-size:15px; }
+
+  form{ padding:26px; }
+  .frow{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:18px; }
+  .field{ display:flex; flex-direction:column; gap:7px; }
+  .field.full{ grid-column:1 / -1; }
+  .field label{ font-family:'Space Mono'; font-size:10.5px; letter-spacing:0.08em; color:var(--ink-soft); text-transform:uppercase; }
+  .field input, .field select{
+    font-family:'Work Sans'; font-size:15px; color:var(--ink);
+    border:none; border-bottom:2px solid var(--paper-line); background:transparent; padding:8px 2px 9px;
+    width:100%;
+  }
+  .field input:focus, .field select:focus{ border-bottom-color:var(--margin); outline:none; }
+
+  .plan-picker{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px; }
+  .plan{ border:1.5px solid var(--paper-line); border-radius:8px; padding:12px 10px; cursor:pointer; text-align:center; transition:border-color .15s ease, background .15s ease; }
+  .plan input{ display:none; }
+  .plan .n{ font-family:'Zilla Slab'; font-weight:700; font-size:19px; display:block; }
+  .plan .l{ font-family:'Space Mono'; font-size:9.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.06em; }
+  .plan .p{ font-family:'Space Mono'; font-size:10px; color:var(--seal-deep); margin-top:3px; display:block; min-height:12px; }
+  .plan.selected{ border-color:var(--seal); background:#F7ECD3; }
+
+  .submit-btn{
+    width:100%; background:var(--seal); color:var(--paper); border:2px solid var(--seal-deep); border-radius:10px;
+    font-family:'Zilla Slab'; font-weight:700; font-size:16px; padding:15px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:10px; transition:background .15s ease, transform .15s ease;
+  }
+  .submit-btn:hover{ background:var(--seal-deep); transform:translateY(-2px); }
+  .fineprint{ font-family:'Space Mono'; font-size:11px; color:var(--ink-soft); text-align:center; margin-top:14px; line-height:1.6; }
+
+  /* ── confirmation state ───────────────────────────────────────── */
+  .confirm{ display:none; padding:52px 26px; text-align:center; }
+  .confirm.show{ display:block; }
+  .stamp{
+    width:120px; height:120px; margin:0 auto 22px; border-radius:50%; border:3px solid var(--profit); color:var(--profit);
+    display:flex; align-items:center; justify-content:center; text-align:center; font-family:'Space Mono'; font-weight:700;
+    font-size:12px; letter-spacing:0.06em; transform:rotate(-10deg); text-transform:uppercase; line-height:1.35; position:relative;
+    animation:stampIn .5s cubic-bezier(.2,1.4,.4,1) forwards;
+  }
+  .stamp::before{ content:""; position:absolute; inset:8px; border:1px solid var(--profit); border-radius:50%; opacity:0.6; }
+  @keyframes stampIn{ 0%{ opacity:0; transform:rotate(-10deg) scale(1.6);} 100%{ opacity:1; transform:rotate(-10deg) scale(1);} }
+  .confirm h2{ font-size:24px; margin-bottom:10px; }
+  .confirm p{ color:var(--ink-soft); font-size:15px; max-width:38ch; margin:0 auto 26px; line-height:1.6; }
+  .confirm .mono{ font-size:12px; color:var(--ink-soft); }
+
+  .btn{ font-weight:600; font-size:14px; padding:11px 22px; border-radius:999px; border:2px solid var(--ink); cursor:pointer; font-family:'Work Sans'; text-decoration:none; transition:transform .15s ease, background .15s ease; }
+  .btn-dark{ background:var(--ink); color:var(--paper); }
+  .btn-dark:hover{ background:#000; transform:translateY(-2px); }
+
+  .session-banner{ display:none; margin:0 26px 0; padding:18px 20px; border:1.5px solid var(--profit); border-radius:8px; background:#EAF4EC; }
+  .session-banner.show{ display:block; }
+  .session-banner p{ font-size:14px; color:var(--ink); margin-bottom:12px; line-height:1.5; }
+  .session-banner a{ display:inline-flex; align-items:center; gap:8px; background:var(--profit); color:#F3EEE0; font-family:'Zilla Slab'; font-weight:700; font-size:14px; padding:10px 18px; border-radius:8px; }
+  .session-banner a:hover{ background:#245C38; }
+
+  @media (max-width:900px){
+    .split{ grid-template-columns:1fr; }
+    .frow{ grid-template-columns:1fr; }
+    .plan-picker{ grid-template-columns:1fr 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#form">Skip to form</a>
+<div class="ledger-margin" aria-hidden="true"></div>
+
+<header>
+  <nav class="nav wrap">
+    <a class="logo" href="index.html"><span class="ledger-mark"></span>Bustrip</a>
+    <a class="back" href="index.html">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M9.5 3.5L4 8L9.5 12.5" stroke="#5B5A54" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Back to Bustrip Fleet
+    </a>
+  </nav>
+</header>
+
+<main>
+  <div class="wrap split">
+
+    <div class="pitch">
+      <p class="eyebrow">Step 1 of 1 · takes about 3 minutes</p>
+      <h1>Open your fleet's ledger.</h1>
+      <p class="lede">Tell us the basics about your fleet. You'll be logging your first trip and seeing today's profit before you close this tab.</p>
+
+      <div class="checklist">
+        <div class="check-row">
+          <span class="mark">✓</span>
+          <div><h3>No card required to start</h3><p>Free for your first month, first vehicle included — cancel any time.</p></div>
+        </div>
+        <div class="check-row">
+          <span class="mark">✓</span>
+          <div><h3>Add your vehicles &amp; staff once</h3><p>Every trip after that pulls driver and cleaner rates automatically.</p></div>
+        </div>
+        <div class="check-row">
+          <span class="mark">✓</span>
+          <div><h3>Works on any phone browser</h3><p>No app install needed for drivers or office staff to log a trip.</p></div>
+        </div>
+      </div>
+
+      <div class="quote">
+        <p>"Got a permit renewal reminder ten days early for the first time in three years. That alone paid for itself."</p>
+        <div class="who">— A. Verma, 22-bus fleet, Rajasthan</div>
+      </div>
+    </div>
+
+    <div class="ledger" id="formCard">
+      <div class="ledger-head">
+        <span class="title">New Account — Ledger Entry</span>
+        <span class="mono">ENTRY #0001</span>
+      </div>
+
+      <div class="session-banner" id="sessionBanner">
+        <p id="sessionBannerText">You're already logged in.</p>
+        <a href="app.html">Go to dashboard →</a>
+      </div>
+
+      <form id="signupForm">
+        <!-- Honeypot: real users never see or fill this. Any bot that
+             auto-fills every input on the page will trip it. -->
+        <div style="position:absolute; left:-9999px; top:-9999px; width:1px; height:1px; overflow:hidden" aria-hidden="true">
+          <label for="website">Leave this field empty</label>
+          <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
+        </div>
+        <div class="frow">
+          <div class="field">
+            <label for="fleetName">Fleet / company name</label>
+            <input id="fleetName" type="text" placeholder="e.g. Shetty Travels" required />
+          </div>
+          <div class="field">
+            <label for="ownerName">Your name</label>
+            <input id="ownerName" type="text" placeholder="e.g. Ramesh Shetty" required />
+          </div>
+        </div>
+        <div class="frow">
+          <div class="field">
+            <label for="phone">Phone number</label>
+            <input id="phone" type="tel" placeholder="10-digit mobile" required />
+          </div>
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" type="email" placeholder="you@fleet.com" required />
+          </div>
+        </div>
+        <div class="frow">
+          <div class="field">
+            <label for="vehicles">Number of vehicles</label>
+            <input id="vehicles" type="number" min="1" placeholder="e.g. 6" required />
+          </div>
+          <div class="field">
+            <label for="city">City / base</label>
+            <input id="city" type="text" placeholder="e.g. Mangaluru" required />
+          </div>
+        </div>
+
+        <div class="field full" style="margin-bottom:10px">
+          <label>Choose a plan</label>
+        </div>
+        <div class="plan-picker" role="radiogroup" aria-label="Choose a plan">
+          <label class="plan selected"><input type="radio" name="plan" value="starter" checked><span class="n">1–5</span><span class="l">Starter</span><span class="p" id="planPrice-starter"></span></label>
+          <label class="plan"><input type="radio" name="plan" value="growth"><span class="n">6–20</span><span class="l">Growth</span><span class="p" id="planPrice-growth"></span></label>
+          <label class="plan"><input type="radio" name="plan" value="fleet"><span class="n">20+</span><span class="l">Fleet</span><span class="p" id="planPrice-fleet"></span></label>
+        </div>
+
+        <div class="frow">
+          <div class="field">
+            <label for="loginUser">Choose a username</label>
+            <input id="loginUser" type="text" placeholder="lowercase, no spaces" minlength="3" required />
+          </div>
+          <div class="field">
+            <label for="password">Set a password</label>
+            <input id="password" type="password" placeholder="At least 6 characters" minlength="6" required />
+          </div>
+        </div>
+        <p id="formError" style="display:none; color:var(--loss); font-size:13px; margin-bottom:16px"></p>
+
+        <button class="submit-btn" type="submit">
+          Open my ledger
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="#F3EEE0" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <p class="fineprint">By continuing you agree to Bustrip's Terms and Privacy Policy.<br>Already have an account? <a href="app.html" style="color:var(--ink); text-decoration:underline">Log in instead</a>.</p>
+      </form>
+
+      <div class="confirm" id="confirmState">
+        <div class="stamp" style="border-color:var(--seal); color:var(--seal)">Pending<br>Review</div>
+        <h2 id="confirmHeadline">Application received, Fleet.</h2>
+        <p>Your ledger has been created but isn't open yet — an admin needs to confirm your account before you can log in. We'll reach out on the phone number or email you gave us once it's approved.</p>
+        <p class="mono">Already approved? <a href="app.html" style="color:var(--ink); text-decoration:underline">Log in here</a>.</p>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// Same Firebase project as index.html — keep these two files in sync if you
+// ever rotate the project or move to a different Firebase app.
+const firebaseConfig = {
+  apiKey: "AIzaSyAhnVJqA0YhtWP6XwCDKYe4lATdHnfYJL8",
+  authDomain: "bus-trip-sheet.firebaseapp.com",
+  projectId: "bus-trip-sheet",
+  storageBucket: "bus-trip-sheet.firebasestorage.app",
+  messagingSenderId: "1088821538702",
+  appId: "1:1088821538702:web:39d07475301e04ba5bfedf",
+  measurementId: "G-KX12N2J775"
+};
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ── lightweight anti-spam (client-side only — see note in firestore.rules
+// about the real limits of that without server-side auth) ──────────────
+const PAGE_LOAD_TIME = Date.now();
+const MIN_FILL_TIME_MS = 3000;        // reject submits faster than a human could type
+const RESUBMIT_COOLDOWN_MS = 60000;   // one signup per browser tab per minute
+const LAST_SUBMIT_KEY = "bustrip_last_signup_attempt";
+
+async function hashPassword(text) {
+  const enc = new TextEncoder().encode(text);
+  const buf = await crypto.subtle.digest("SHA-256", enc);
+  const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,"0")).join("");
+  return "sha256:" + hex;
+}
+
+const plans = document.querySelectorAll('.plan');
+plans.forEach(p => p.addEventListener('click', () => {
+  plans.forEach(x => x.classList.remove('selected'));
+  p.classList.add('selected');
+  p.querySelector('input').checked = true;
+}));
+
+// ── show each plan's live monthly rate, set by the super admin ──────────
+// Same settings/plan_pricing doc app.html's Companies tab writes to — a
+// one-time read is enough here since this page is only viewed briefly.
+(async function loadPlanPricing(){
+  try {
+    const snap = await getDoc(doc(db, "settings", "plan_pricing"));
+    if (!snap.exists()) return;
+    const rates = snap.data();
+    ["starter","growth","fleet"].forEach(key => {
+      const el = document.getElementById(`planPrice-${key}`);
+      const rate = Number(rates[key]) || 0;
+      if (el && rate) el.textContent = `₹${rate.toLocaleString('en-IN')}/mo`;
+    });
+  } catch(e) { /* pricing not set yet, or offline — plans still work without it */ }
+})();
+
+const form = document.getElementById('signupForm');
+const confirmState = document.getElementById('confirmState');
+const confirmHeadline = document.getElementById('confirmHeadline');
+const errEl = document.getElementById('formError');
+const submitBtn = form.querySelector('.submit-btn');
+
+function showError(msg) { errEl.textContent = msg; errEl.style.display = 'block'; }
+function clearError() { errEl.style.display = 'none'; }
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  clearError();
+
+  // honeypot: a real visitor never touches this field
+  if (document.getElementById('website').value.trim() !== "") {
+    // silently "succeed" without writing anything — don't tip off the bot
+    confirmHeadline.textContent = `Application received.`;
+    form.style.display = 'none';
+    confirmState.classList.add('show');
+    return;
+  }
+
+  // time-trap: nobody fills this form out in under 3 seconds
+  if (Date.now() - PAGE_LOAD_TIME < MIN_FILL_TIME_MS) {
+    showError("That was fast — please double-check the form and try again.");
+    return;
+  }
+
+  // simple per-tab cooldown so one spam script can't loop submissions
+  const lastAttempt = Number(sessionStorage.getItem(LAST_SUBMIT_KEY) || 0);
+  if (Date.now() - lastAttempt < RESUBMIT_COOLDOWN_MS) {
+    const waitSec = Math.ceil((RESUBMIT_COOLDOWN_MS - (Date.now() - lastAttempt)) / 1000);
+    showError(`Please wait ${waitSec}s before submitting again.`);
+    return;
+  }
+
+  const fleetName  = document.getElementById('fleetName').value.trim();
+  const ownerName  = document.getElementById('ownerName').value.trim();
+  const phone      = document.getElementById('phone').value.trim();
+  const email      = document.getElementById('email').value.trim();
+  const vehicles   = document.getElementById('vehicles').value;
+  const city       = document.getElementById('city').value.trim();
+  const plan       = form.querySelector('input[name="plan"]:checked')?.value || 'starter';
+  const username   = document.getElementById('loginUser').value.trim().toLowerCase().replace(/\s+/g,"");
+  const password   = document.getElementById('password').value;
+
+  if (!fleetName || !ownerName || !phone || !email || !vehicles || !city) {
+    showError("Please fill in every field."); return;
+  }
+  if (username.length < 3) { showError("Username must be at least 3 characters, no spaces."); return; }
+  if (password.length < 6) { showError("Password must be at least 6 characters."); return; }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Opening your ledger…";
+
+  try {
+    // usernames are the Firestore doc id in the `users` collection — reject duplicates
+    const existing = await getDoc(doc(db, "users", username));
+    if (existing.exists()) {
+      showError(`"${username}" is already taken — pick another username.`);
+      submitBtn.disabled = false; submitBtn.textContent = "Open my ledger";
+      return;
+    }
+
+    await setDoc(doc(db, "users", username), {
+      username, displayName: ownerName, password: await hashPassword(password),
+      role: "admin", active: false, status: "pending", companyId: username, created: Date.now(),
+      fleetName, phone, email, vehicles: Number(vehicles)||0, city, plan
+    });
+    sessionStorage.setItem(LAST_SUBMIT_KEY, String(Date.now())); // cooldown only on real success
+
+    // NOTE: no session is created here on purpose — new fleet accounts stay
+    // inactive until an existing admin approves them from the Staff tab
+    // (Users list -> ENABLE). This is deliberate, not a bug: don't remove it.
+    confirmHeadline.textContent = `Application received, ${fleetName}.`;
+    form.style.display = 'none';
+    confirmState.classList.add('show');
+    confirmState.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+  } catch (err) {
+    showError("Couldn't create your account — check your connection and try again.");
+    submitBtn.disabled = false; submitBtn.textContent = "Open my ledger";
+  }
+});
+
+// ── already logged in? offer the dashboard instead of a fresh signup ──
+(function(){
+  try {
+    const raw = sessionStorage.getItem('mt_auth');
+    if (!raw) return;
+    const sess = JSON.parse(raw);
+    if (!sess || !sess.expires || sess.expires <= Date.now()) return; // no session, or expired
+
+    document.getElementById('sessionBannerText').textContent =
+      `You're already logged in as ${sess.username || 'a user'}. No need to sign up again.`;
+    document.getElementById('sessionBanner').classList.add('show');
+  } catch(e) { /* corrupted session data — leave the page as-is */ }
+})();
+</script>
+
+</body>
+</html>
