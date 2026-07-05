@@ -1,0 +1,19 @@
+{
+  "name": "Bustrip Driver",
+  "short_name": "Bustrip Driver",
+  "description": "Start-of-journey check-in, trip reports, leave/advance requests and earnings for omnibus drivers.",
+  "start_url": "https://bustrip.net.in/driver.html",
+  "scope": "https://bustrip.net.in/",
+  "id": "bustrip-driver",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef1fb",
+  "theme_color": "#1565c0",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    { "src": "https://bustrip.net.in/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "https://bustrip.net.in/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "https://bustrip.net.in/icons/icon-192-maskable.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "https://bustrip.net.in/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
