@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Get Started with Bustrip Fleet</title>
+<meta name="description" content="Create your Bustrip Fleet account for daily trip P&L, driver check-ins, GPS traffic proof, speedometer, odometer, finance and fleet reports." />
+<meta name="theme-color" content="#1565c0" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f8fb;--panel:#fff;--ink:#102033;--muted:#627087;--line:#dbe4f0;--brand:#1565c0;--brand2:#0f8b8d;--dark:#0b2a4a;--green:#198754;--red:#c62828;--orange:#e84917;--shadow:0 28px 80px rgba(16,32,51,.12);--radius:24px}*{box-sizing:border-box;margin:0;padding:0}body{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:radial-gradient(circle at 15% 20%,rgba(66,165,245,.16),transparent 26%),radial-gradient(circle at 85% 10%,rgba(15,139,141,.14),transparent 28%),var(--bg);color:var(--ink);line-height:1.55;min-height:100vh}a{color:inherit;text-decoration:none}button,input,select{font:inherit}.mono{font-family:'Space Mono',monospace}.wrap{max-width:1180px;margin:0 auto;padding:0 22px}.skip{position:absolute;left:-999px;top:10px;background:var(--dark);color:#fff;padding:10px 14px;border-radius:12px;z-index:1000}.skip:focus{left:12px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;border-radius:999px;padding:12px 18px;font-weight:900;border:1px solid transparent;cursor:pointer;min-height:46px}.btn-primary{background:linear-gradient(135deg,var(--brand),#42a5f5);color:#fff;box-shadow:0 16px 34px rgba(21,101,192,.24)}.btn-dark{background:var(--dark);color:#fff}.btn-light{background:#fff;border-color:var(--line);color:var(--dark)}.site-header{background:rgba(246,248,251,.86);backdrop-filter:blur(16px);border-bottom:1px solid rgba(219,228,240,.86);position:sticky;top:0;z-index:50}.nav{height:74px;display:flex;align-items:center;justify-content:space-between;gap:18px}.logo{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:900;letter-spacing:-.04em}.logo-mark{width:40px;height:40px;border-radius:14px;background:linear-gradient(135deg,var(--brand),var(--brand2));display:grid;place-items:center;color:#fff}.nav-actions{display:flex;gap:10px;align-items:center}.main{padding:48px 0 78px}.split{display:grid;grid-template-columns:.88fr 1.12fr;gap:40px;align-items:start}.badge{display:inline-flex;align-items:center;gap:8px;background:#e8f2ff;color:#0d4f91;border:1px solid #cde2ff;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px;letter-spacing:.04em;text-transform:uppercase}.pitch h1{font-size:clamp(36px,5vw,58px);line-height:.98;letter-spacing:-.06em;margin:18px 0}.pitch h1 span{color:var(--brand)}.lede{font-size:18px;color:var(--muted);margin-bottom:24px;max-width:54ch}.benefits{display:grid;gap:12px;margin:26px 0}.benefit{display:grid;grid-template-columns:46px 1fr;gap:14px;align-items:start;background:#fff;border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:0 10px 30px rgba(16,32,51,.05)}.benefit-icon{width:46px;height:46px;border-radius:16px;background:#eef5ff;display:grid;place-items:center;font-size:23px}.benefit h3{font-size:17px;margin-bottom:3px}.benefit p{font-size:14px;color:var(--muted)}.quote{background:#102033;color:#fff;border-radius:24px;padding:22px;margin-top:18px}.quote p{color:#c7d6e8}.quote strong{display:block;margin-top:10px}.form-card{background:#fff;border:1px solid var(--line);border-radius:30px;box-shadow:var(--shadow);overflow:hidden}.form-head{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:22px 26px;background:linear-gradient(135deg,#ffffff,#edf5ff);border-bottom:1px solid var(--line)}.form-head h2{font-size:25px;letter-spacing:-.04em}.form-head p{color:var(--muted);font-size:14px}.form-body{padding:26px}.session-banner{display:none;margin-bottom:18px;background:#e7f7ee;border:1px solid #bfe6ce;color:#0f6339;border-radius:18px;padding:14px 16px;font-weight:700}.session-banner.show{display:flex;justify-content:space-between;gap:12px;align-items:center}.frow{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}.field{display:flex;flex-direction:column;gap:7px}.field.full{grid-column:1/-1}.field label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:900}.field input,.field select{width:100%;border:1px solid var(--line);border-radius:16px;padding:13px 14px;background:#fbfdff;color:var(--ink);outline:none}.field input:focus,.field select:focus{border-color:var(--brand);box-shadow:0 0 0 4px rgba(21,101,192,.12)}.plan-picker{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:8px 0 18px}.plan{position:relative;border:1.5px solid var(--line);border-radius:18px;padding:16px 12px;cursor:pointer;background:#fbfdff;transition:.16s;text-align:left}.plan input{position:absolute;opacity:0;pointer-events:none}.plan.selected{border-color:var(--brand);background:#eef5ff;box-shadow:0 10px 26px rgba(21,101,192,.12)}.plan .n{display:block;font-size:24px;font-weight:900;letter-spacing:-.04em}.plan .l{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:900}.plan .p{display:block;color:var(--brand);font-size:12px;margin-top:4px;font-weight:900;min-height:18px}.submit-btn{width:100%;border:none;border-radius:18px;background:linear-gradient(135deg,var(--brand),#42a5f5);color:#fff;font-weight:900;padding:16px;cursor:pointer;box-shadow:0 16px 34px rgba(21,101,192,.24);display:flex;justify-content:center;gap:10px;align-items:center}.submit-btn:disabled{opacity:.7;cursor:not-allowed}.fineprint{color:var(--muted);font-size:12px;text-align:center;margin-top:14px}.fineprint a{text-decoration:underline;color:var(--dark)}.error{display:none;background:#fdecea;border:1px solid #ffc3c3;color:var(--red);border-radius:16px;padding:12px 14px;margin-bottom:16px;font-size:14px}.confirm{display:none;padding:34px;text-align:center}.confirm.show{display:block}.confirm-badge{width:86px;height:86px;border-radius:28px;background:#e7f7ee;color:var(--green);display:grid;place-items:center;font-size:42px;margin:0 auto 18px}.confirm h2{font-size:30px;letter-spacing:-.04em}.confirm p{color:var(--muted);margin-top:10px}.mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px}.mini{background:#f4f8fd;border:1px solid var(--line);border-radius:18px;padding:13px}.mini strong{display:block}.mini span{display:block;color:var(--muted);font-size:12px}.hidden-hp{position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden}.security-note{display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:start;background:#fff8e7;border:1px solid #ffe1a3;border-radius:18px;padding:14px;margin-top:16px}.security-note p{font-size:13px;color:#795b13}.footer{padding:0 0 32px;color:var(--muted);font-size:13px;text-align:center}@media(max-width:920px){.split{grid-template-columns:1fr}.pitch{max-width:760px}.nav-actions .btn-light{display:none}}@media(max-width:640px){.wrap{padding:0 16px}.main{padding:34px 0 58px}.frow,.plan-picker,.mini-grid{grid-template-columns:1fr}.form-head{align-items:flex-start;flex-direction:column}.nav{height:auto;padding:14px 0}.nav-actions{gap:6px}.btn{padding:10px 13px;font-size:14px}.form-body{padding:20px}.session-banner{flex-direction:column;align-items:flex-start}}
+</style>
+</head>
+<body>
+<a href="#main" class="skip">Skip to form</a>
+<header class="site-header">
+  <div class="wrap nav">
+    <a class="logo" href="index.html"><span class="logo-mark">🚌</span><span>Bustrip</span></a>
+    <div class="nav-actions">
+      <a class="btn btn-light" href="index.html">← Website</a>
+      <a class="btn btn-dark" href="app.html">Office Login</a>
+      <a class="btn btn-primary" href="driver.html">Driver App</a>
+    </div>
+  </div>
+</header>
+<main class="main" id="main">
+  <div class="wrap split">
+    <section class="pitch">
+      <span class="badge">Open your fleet workspace</span>
+      <h1>Start managing your buses with <span>daily proof and profit clarity.</span></h1>
+      <p class="lede">Create your Bustrip operator account. After approval, you can use the office dashboard, driver app, vehicle profiles, finance, reports, parcel tracking, traffic-delay evidence and GPS speedometer/odometer.</p>
+      <div class="benefits">
+        <div class="benefit"><div class="benefit-icon">🏠</div><div><h3>Office Dashboard</h3><p>Track revenue, expenses, profit, vehicles, staff, dues, alerts and driver submissions.</p></div></div>
+        <div class="benefit"><div class="benefit-icon">📱</div><div><h3>Driver Road Mode</h3><p>After check-in, drivers only see Parcel Entry, Traffic Evidence and Speedometer/Odometer.</p></div></div>
+        <div class="benefit"><div class="benefit-icon">📸</div><div><h3>Traffic Proof</h3><p>Delay proof includes photo, GPS, timestamp, accuracy, delay minutes and reason.</p></div></div>
+        <div class="benefit"><div class="benefit-icon">📊</div><div><h3>Reports & Finance</h3><p>Vehicle-wise P&amp;L, fuel, salaries, advances, tax, EMI and document reminders.</p></div></div>
+      </div>
+      <div class="quote"><p>“Bustrip is designed for the operator who wants one honest number at the end of the day — and proof when a trip is delayed.”</p><strong>Built for omnibus operators</strong></div>
+    </section>
+
+    <section class="form-card" aria-label="Create Bustrip account">
+      <div class="form-head">
+        <div><h2>Create Fleet Account</h2><p>Submit your details. The account stays pending until approved by an admin.</p></div>
+        <span class="badge">2 minutes</span>
+      </div>
+      <div class="form-body">
+        <div class="session-banner" id="sessionBanner"><span id="sessionBannerText">You're already logged in.</span><a class="btn btn-dark" href="app.html">Open Dashboard</a></div>
+        <form id="signupForm" autocomplete="on">
+          <div class="hidden-hp" aria-hidden="true"><label for="website">Website</label><input id="website" type="text" tabindex="-1" autocomplete="off" /></div>
+          <div class="frow">
+            <div class="field"><label for="fleetName">Fleet / company name</label><input id="fleetName" type="text" placeholder="e.g. Hassan Travels" required /></div>
+            <div class="field"><label for="ownerName">Owner / admin name</label><input id="ownerName" type="text" placeholder="Your name" required /></div>
+          </div>
+          <div class="frow">
+            <div class="field"><label for="phone">Phone / WhatsApp</label><input id="phone" type="tel" placeholder="+91 98765 43210" required /></div>
+            <div class="field"><label for="email">Email</label><input id="email" type="email" placeholder="you@fleet.com" required /></div>
+          </div>
+          <div class="frow">
+            <div class="field"><label for="vehicles">Number of vehicles</label><input id="vehicles" type="number" min="1" placeholder="e.g. 8" required /></div>
+            <div class="field"><label for="city">City / base</label><input id="city" type="text" placeholder="e.g. Mangaluru" required /></div>
+          </div>
+          <div class="field full" style="margin-bottom:4px"><label>Choose plan</label></div>
+          <div class="plan-picker" role="radiogroup" aria-label="Choose a Bustrip plan">
+            <label class="plan selected"><input type="radio" name="plan" value="starter" checked><span class="n">1–5</span><span class="l">Starter</span><span class="p" id="planPrice-starter"></span></label>
+            <label class="plan"><input type="radio" name="plan" value="growth"><span class="n">6–20</span><span class="l">Growth</span><span class="p" id="planPrice-growth"></span></label>
+            <label class="plan"><input type="radio" name="plan" value="fleet"><span class="n">20+</span><span class="l">Fleet</span><span class="p" id="planPrice-fleet"></span></label>
+          </div>
+          <div class="frow">
+            <div class="field"><label for="loginUser">Choose username</label><input id="loginUser" type="text" placeholder="lowercase, no spaces" minlength="3" required /></div>
+            <div class="field"><label for="password">Set password</label><input id="password" type="password" placeholder="At least 6 characters" minlength="6" required /></div>
+          </div>
+          <div id="formError" class="error"></div>
+          <button class="submit-btn" type="submit" id="submitBtn">Submit for Approval →</button>
+          <p class="fineprint">Already approved? <a href="app.html">Log in to Office App</a>. Driver login is available at <a href="driver.html">driver.html</a>.</p>
+        </form>
+        <div class="confirm" id="confirmState">
+          <div class="confirm-badge">✓</div>
+          <h2 id="confirmHeadline">Application received.</h2>
+          <p>Your fleet account has been created in pending status. An admin must enable the account before login.</p>
+          <div class="mini-grid">
+            <div class="mini"><strong>1</strong><span>Admin reviews</span></div>
+            <div class="mini"><strong>2</strong><span>Account enabled</span></div>
+            <div class="mini"><strong>3</strong><span>Start using Bustrip</span></div>
+          </div>
+          <p class="mono"><a href="app.html" style="text-decoration:underline;color:var(--dark)">Go to Office Login</a></p>
+        </div>
+        <div class="security-note"><div>🔐</div><p>For production, use secure server-side authentication. This signup page keeps your existing Firebase workflow and pending-approval model.</p></div>
+      </div>
+    </section>
+  </div>
+</main>
+<footer class="footer"><div class="wrap">© 2026 Bustrip Fleet · Office App · Driver App · Fleet Management</div></footer>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyAhnVJqA0YhtWP6XwCDKYe4lATdHnfYJL8",
+  authDomain: "bus-trip-sheet.firebaseapp.com",
+  projectId: "bus-trip-sheet",
+  storageBucket: "bus-trip-sheet.firebasestorage.app",
+  messagingSenderId: "1088821538702",
+  appId: "1:1088821538702:web:39d07475301e04ba5bfedf",
+  measurementId: "G-KX12N2J775"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const PAGE_LOAD_TIME = Date.now();
+const MIN_FILL_TIME_MS = 3000;
+const RESUBMIT_COOLDOWN_MS = 60000;
+const LAST_SUBMIT_KEY = "bustrip_last_signup_attempt";
+async function hashPassword(text) {
+  const enc = new TextEncoder().encode(text);
+  const buf = await crypto.subtle.digest("SHA-256", enc);
+  const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,"0")).join("");
+  return "sha256:" + hex;
+}
+const form = document.getElementById('signupForm');
+const confirmState = document.getElementById('confirmState');
+const confirmHeadline = document.getElementById('confirmHeadline');
+const errEl = document.getElementById('formError');
+const submitBtn = document.getElementById('submitBtn');
+const plans = document.querySelectorAll('.plan');
+plans.forEach(p => p.addEventListener('click', () => {
+  plans.forEach(x => x.classList.remove('selected'));
+  p.classList.add('selected');
+  p.querySelector('input').checked = true;
+}));
+(function preselectPlanFromQuery(){
+  const requested = new URLSearchParams(window.location.search).get('plan');
+  if (!requested) return;
+  const match = Array.from(plans).find(p => p.querySelector('input').value === requested);
+  if (!match) return;
+  plans.forEach(x => x.classList.remove('selected'));
+  match.classList.add('selected');
+  match.querySelector('input').checked = true;
+})();
+(async function loadPlanPricing(){
+  try {
+    const snap = await getDoc(doc(db, "settings", "plan_pricing"));
+    if (!snap.exists()) return;
+    const rates = snap.data();
+    ["starter","growth","fleet"].forEach(key => {
+      const el = document.getElementById(`planPrice-${key}`);
+      const rate = Number(rates[key]) || 0;
+      if (el && rate) el.textContent = `₹${rate.toLocaleString('en-IN')}/mo`;
+    });
+  } catch(e) {}
+})();
+function showError(msg){ errEl.textContent = msg; errEl.style.display = 'block'; }
+function clearError(){ errEl.textContent = ''; errEl.style.display = 'none'; }
+function normaliseUsername(value){ return value.trim().toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9._-]/g,''); }
+document.getElementById('loginUser').addEventListener('input', e => { e.target.value = normaliseUsername(e.target.value); });
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  clearError();
+  if (document.getElementById('website').value.trim() !== "") {
+    confirmHeadline.textContent = `Application received.`;
+    form.style.display = 'none';
+    confirmState.classList.add('show');
+    return;
+  }
+  if (Date.now() - PAGE_LOAD_TIME < MIN_FILL_TIME_MS) { showError("Please review the form and try again."); return; }
+  const lastAttempt = Number(sessionStorage.getItem(LAST_SUBMIT_KEY) || 0);
+  if (Date.now() - lastAttempt < RESUBMIT_COOLDOWN_MS) {
+    const waitSec = Math.ceil((RESUBMIT_COOLDOWN_MS - (Date.now() - lastAttempt)) / 1000);
+    showError(`Please wait ${waitSec}s before submitting again.`);
+    return;
+  }
+  const fleetName = document.getElementById('fleetName').value.trim();
+  const ownerName = document.getElementById('ownerName').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const vehicles = document.getElementById('vehicles').value;
+  const city = document.getElementById('city').value.trim();
+  const plan = form.querySelector('input[name="plan"]:checked')?.value || 'starter';
+  const username = normaliseUsername(document.getElementById('loginUser').value);
+  const password = document.getElementById('password').value;
+  if (!fleetName || !ownerName || !phone || !email || !vehicles || !city) { showError("Please fill in every field."); return; }
+  if (username.length < 3) { showError("Username must be at least 3 characters."); return; }
+  if (password.length < 6) { showError("Password must be at least 6 characters."); return; }
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Submitting…";
+  try {
+    const existing = await getDoc(doc(db, "users", username));
+    if (existing.exists()) {
+      showError(`"${username}" is already taken — choose another username.`);
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Submit for Approval →";
+      return;
+    }
+    await setDoc(doc(db, "users", username), {
+      username,
+      displayName: ownerName,
+      password: await hashPassword(password),
+      role: "admin",
+      active: false,
+      status: "pending",
+      companyId: username,
+      created: Date.now(),
+      fleetName,
+      phone,
+      email,
+      vehicles: Number(vehicles) || 0,
+      city,
+      plan
+    });
+    sessionStorage.setItem(LAST_SUBMIT_KEY, String(Date.now()));
+    confirmHeadline.textContent = `Application received, ${fleetName}.`;
+    form.style.display = 'none';
+    confirmState.classList.add('show');
+    confirmState.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+  } catch(err) {
+    showError("Couldn't create your account. Check your internet connection and try again.");
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Submit for Approval →";
+  }
+});
+(function showExistingSession(){
+  try {
+    const raw = sessionStorage.getItem('mt_auth');
+    if (!raw) return;
+    const sess = JSON.parse(raw);
+    if (!sess || !sess.expires || sess.expires <= Date.now()) return;
+    document.getElementById('sessionBannerText').textContent = `You're already logged in as ${sess.username || 'a user'}.`;
+    document.getElementById('sessionBanner').classList.add('show');
+  } catch(e) {}
+})();
+</script>
+</body>
+</html>
