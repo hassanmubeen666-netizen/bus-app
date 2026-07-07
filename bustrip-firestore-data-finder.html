@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bustrip Firestore Data Finder</title>
+<style>
+  *{box-sizing:border-box} body{font-family:Arial,sans-serif;background:#f3eee0;color:#201f28;margin:0;padding:24px} .wrap{max-width:1000px;margin:auto} .card{background:#fff;border:1px solid #ddd;border-radius:12px;padding:18px;margin:14px 0;box-shadow:0 4px 18px rgba(0,0,0,.05)} h1{margin:0 0 8px;font-size:28px} .muted{color:#666;font-size:14px;line-height:1.5} button{background:#b4842a;color:#fff;border:none;border-radius:8px;padding:12px 18px;font-weight:700;cursor:pointer;margin:6px 6px 6px 0} button.secondary{background:#201f28} table{width:100%;border-collapse:collapse;font-size:13px;margin-top:12px} th,td{border-bottom:1px solid #eee;text-align:left;padding:10px;vertical-align:top} th{background:#f8f4e8} .ok{color:#15803d;font-weight:700}.bad{color:#b23b2e;font-weight:700}.warn{color:#b4842a;font-weight:700} pre{white-space:pre-wrap;background:#f7f7f7;padding:12px;border-radius:8px;max-height:280px;overflow:auto;font-size:12px}.logo{height:48px;max-width:210px;object-fit:contain}.pill{display:inline-block;background:#f8f4e8;border:1px solid #e7dfc9;border-radius:999px;padding:5px 10px;font-size:12px;margin:3px}.dangerBox{border-color:#b23b2e;background:#fff7f5}.goodBox{border-color:#2e7d46;background:#f4fff7}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>🛟 Bustrip Firestore Data Finder</h1>
+    <p class="muted">This tool checks whether your browser can read old Bustrip data from Firestore and browser localStorage. It does not delete or overwrite anything.</p>
+    <div><span class="pill">Project: <b>bus-trip-sheet</b></span><span class="pill">Email: bustripinfo1@gmail.com</span></div>
+    <button onclick="scanAll()">Scan Firestore + Browser Storage</button>
+    <button class="secondary" onclick="downloadReport()">Download Diagnostic JSON</button>
+    <button class="secondary" onclick="exportLocal()">Export Browser LocalStorage</button>
+  </div>
+  <div id="out" class="card"><b>Ready.</b> Click scan.</div>
+</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyAhnVJqA0YhtWP6XwCDKYe4lATdHnfYJL8",
+  authDomain: "bus-trip-sheet.firebaseapp.com",
+  projectId: "bus-trip-sheet",
+  storageBucket: "bus-trip-sheet.firebasestorage.app",
+  messagingSenderId: "1088821538702",
+  appId: "1:1088821538702:web:39d07475301e04ba5bfedf",
+  measurementId: "G-KX12N2J775"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const collections = ["logs","staff","vehicles","tax","emi","users","access_log","driver_reports","leave_requests","advance_requests","vehicle_issues","journey_checkins","journey_checkin_photos","driver_assignments","parcel_receipts","parcel_receipt_photos","office_messages","traffic_delay_evidence","driver_speed_logs","company_logos"];
+let last = null;
+function esc(s){return String(s??"").replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function looksLikeLog(x){ if(!x||typeof x!=="object")return false; const k=Object.keys(x).map(v=>v.toLowerCase()); return k.includes("date") && (k.includes("vehicle_number")||k.includes("vehicle")||k.includes("profit")||k.includes("revenue")||k.includes("total_revenue")); }
+function scanLocal(){ const found=[]; for(let i=0;i<localStorage.length;i++){ const key=localStorage.key(i); let raw=""; try{raw=localStorage.getItem(key)||""}catch(e){} let parsed=null; try{parsed=JSON.parse(raw)}catch(e){} let count=0,sample=null,type="text"; if(Array.isArray(parsed)){type="array";count=parsed.length;sample=parsed[0]} else if(parsed&&typeof parsed==="object"){type="object";const vals=Object.values(parsed);count=vals.length;sample=vals[0]||parsed} const likely=key.toLowerCase().includes("bus")||key.toLowerCase().includes("log")||key.toLowerCase().includes("bustrip")||looksLikeLog(sample)||(Array.isArray(parsed)&&parsed.some(looksLikeLog)); if(likely)found.push({key,type,count,rawLength:raw.length,sample}); } return found; }
+window.scanAll = async function(){ const out=document.getElementById('out'); out.innerHTML='<b>Scanning...</b>'; const results=[]; for(const name of collections){ try{ const snap=await getDocs(collection(db,name)); const docs=snap.docs.map(d=>({id:d.id,...d.data()})); results.push({name,ok:true,count:docs.length,docs:docs.slice(0,5)}); }catch(e){ results.push({name,ok:false,count:0,error:e.code||e.message||String(e)}); } }
+ const local=scanLocal(); last={when:new Date().toISOString(),projectId:firebaseConfig.projectId,results,local}; const log=results.find(r=>r.name==='logs'); const total=results.reduce((s,r)=>s+(r.count||0),0); let diag=''; let box=''; if(!log.ok){diag=`Logs collection is blocked: ${esc(log.error)}. Firestore rules are still preventing reads.`; box='dangerBox'} else if(log.count>0){diag=`Found ${log.count} daily log document(s) in Firestore logs collection.`; box='goodBox'} else if(total>0){diag='Firestore is readable, but logs has 0 documents. Old entries may be in another Firebase project, another collection, or only in browser/local backup.'; box='dangerBox'} else {diag='No documents found in checked Firestore collections. This points to wrong Firebase project/database, empty database, or old records stored outside Firestore.'; box='dangerBox'} const rows=results.map(r=>`<tr><td>${esc(r.name)}</td><td class="${r.ok?'ok':'bad'}">${r.ok?'Readable':'Error'}</td><td>${r.count||0}</td><td>${r.ok?'':esc(r.error)}</td></tr>`).join(''); const samples=results.filter(r=>r.ok&&r.count&&r.docs?.length).map(r=>`<details><summary><b>${esc(r.name)}</b> sample (${r.count})</summary><pre>${esc(JSON.stringify(r.docs,null,2))}</pre></details>`).join(''); const lrows=local.map(x=>`<tr><td>${esc(x.key)}</td><td>${esc(x.type)}</td><td>${x.count}</td><td>${x.rawLength}</td></tr>`).join(''); out.innerHTML=`<div class="card ${box}"><h2>Result</h2><p>${diag}</p></div><h2>Firestore Counts</h2><table><thead><tr><th>Collection</th><th>Status</th><th>Docs</th><th>Error</th></tr></thead><tbody>${rows}</tbody></table><h2>Browser LocalStorage Candidates</h2>${local.length?`<table><thead><tr><th>Key</th><th>Type</th><th>Items</th><th>Size</th></tr></thead><tbody>${lrows}</tbody></table>`:'<p class="muted">No likely Bustrip local records found in this browser.</p>'}<h2>Readable Samples</h2>${samples||'<p class="muted">No samples available.</p>'}`; };
+window.downloadReport=function(){ if(!last){alert('Run scan first.');return;} const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(last,null,2)],{type:'application/json'})); a.download='bustrip-firestore-diagnostic.json'; a.click(); URL.revokeObjectURL(a.href); };
+window.exportLocal=function(){ const dump={}; for(let i=0;i<localStorage.length;i++){ const key=localStorage.key(i); dump[key]=localStorage.getItem(key); } const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify({when:new Date().toISOString(),localStorage:dump},null,2)],{type:'application/json'})); a.download='bustrip-browser-localstorage.json'; a.click(); URL.revokeObjectURL(a.href); };
+</script>
+</body>
+</html>

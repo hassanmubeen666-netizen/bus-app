@@ -1337,7 +1337,7 @@ body{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",san
 <!-- Firebase SDKs -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, doc, setDoc, addDoc, deleteDoc, onSnapshot, getDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, doc, setDoc, addDoc, deleteDoc, onSnapshot, getDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAhnVJqA0YhtWP6XwCDKYe4lATdHnfYJL8",
@@ -1486,24 +1486,48 @@ window.handleLogoUpload = function(evt) {
   reader.readAsDataURL(file);
 };
 function scopedToCompany(arr) {
+  const list = Array.isArray(arr) ? arr : [];
   const eff = effectiveCompanyId();
   if (!eff) return [];
 
   // DATA RECOVERY / BACKWARD COMPATIBILITY:
-  // Older Bustrip records were saved before companyId existed. Those records
-  // must never disappear after updates, so admins can still see legacy records
-  // along with their current company records. Platform super admins see all
-  // company data until they choose a specific company from the Companies tab.
-  if (currentIsSuperAdmin && !superAdminViewingCompanyId) return arr.slice();
+  // Older Bustrip records were saved before companyId existed. Some later
+  // versions also logged in office users under a different companyId/role.
+  // To avoid making saved history look erased, the Office app now falls back
+  // to visible raw records whenever the strict company filter finds nothing.
+  // Drivers still only see their own scoped data.
+  const isOfficeUser = currentRole !== "driver";
+  const forceShowAll = isOfficeUser && localStorage.getItem("bustrip_show_all_data") === "1";
 
-  return arr.filter(r => {
+  if (currentIsSuperAdmin && !superAdminViewingCompanyId) return list.slice();
+  if (forceShowAll) return list.slice();
+
+  const scoped = list.filter(r => {
     const cid = ownerOf(r);
     if (cid === eff) return true;
     const isLegacyRecord = !r.companyId || cid === LEGACY_COMPANY_ID;
-    const canReadLegacy = currentRole === "admin" || currentIsSuperAdmin;
-    return canReadLegacy && isLegacyRecord;
+    return isOfficeUser && isLegacyRecord;
   });
+
+  // Emergency visibility fallback: if Firestore returned records but the
+  // company filter matched zero, show the raw records in office mode instead
+  // of showing an empty History/Reports page. This does not delete or move data;
+  // it only prevents old records from being hidden by account-mapping changes.
+  if (!scoped.length && list.length && isOfficeUser) return list.slice();
+  return scoped;
 }
+
+window.showAllRecoveredData = function() {
+  localStorage.setItem("bustrip_show_all_data", "1");
+  refreshScopedData();
+  alert("Recovery view enabled. All records available to this office login are now shown.");
+};
+
+window.stopShowAllRecoveredData = function() {
+  localStorage.removeItem("bustrip_show_all_data");
+  refreshScopedData();
+  alert("Recovery view disabled. Showing normal company records only.");
+};
 
 // Raw = everything Firestore sends us (all companies). The scoped arrays
 // (logs, staff, users, taxRecords, emiRecords, vehicles, accessLogs) are
@@ -3121,11 +3145,135 @@ function calcLive() {
  "f-maint","f-other","f-notes"].forEach(id=>{ const el=v(id); if(el) el.addEventListener("input",calcLive); });
 calcLive();
 
+
+// ── EMERGENCY DATA FINDER / RECOVERY DIAGNOSTIC ──────────────────────────
+// This tool does not delete or rewrite anything. It checks exactly what the
+// browser can read from Firestore and from this browser's localStorage, then
+// shows a clear report inside History. It is useful when old entries appear
+// missing after rules/account/filter changes.
+const RECOVERY_COLLECTIONS = [
+  "logs", "staff", "vehicles", "tax", "emi", "users", "access_log",
+  "driver_reports", "leave_requests", "advance_requests", "vehicle_issues",
+  "journey_checkins", "journey_checkin_photos", "driver_assignments",
+  "parcel_receipts", "parcel_receipt_photos", "office_messages",
+  "traffic_delay_evidence", "driver_speed_logs", "company_logos"
+];
+let lastRecoveryScan = null;
+function looksLikeLogRecord(x) {
+  if (!x || typeof x !== "object") return false;
+  const keys = Object.keys(x).map(k=>k.toLowerCase());
+  return keys.includes("date") && (
+    keys.includes("vehicle_number") || keys.includes("vehicle") ||
+    keys.includes("revenue") || keys.includes("total_revenue") ||
+    keys.includes("profit") || keys.includes("start_point") || keys.includes("end_point")
+  );
+}
+function scanLocalStorageForBustripData() {
+  const found = [];
+  for (let i=0; i<localStorage.length; i++) {
+    const key = localStorage.key(i);
+    let raw = "";
+    try { raw = localStorage.getItem(key) || ""; } catch(e) {}
+    let parsed = null;
+    try { parsed = JSON.parse(raw); } catch(e) {}
+    let count = 0, sample = null, type = "text";
+    if (Array.isArray(parsed)) {
+      type = "array"; count = parsed.length; sample = parsed[0] || null;
+    } else if (parsed && typeof parsed === "object") {
+      type = "object";
+      const vals = Object.values(parsed);
+      count = vals.length;
+      sample = vals[0] || parsed;
+    }
+    const likely = key.toLowerCase().includes("bustrip") || key.toLowerCase().includes("bus") || key.toLowerCase().includes("log") || looksLikeLogRecord(sample) || (Array.isArray(parsed) && parsed.some(looksLikeLogRecord));
+    if (likely) found.push({key, type, count, sample, rawLength: raw.length});
+  }
+  return found;
+}
+window.exportBrowserLocalData = function() {
+  const dump = {};
+  for (let i=0; i<localStorage.length; i++) {
+    const key = localStorage.key(i);
+    dump[key] = localStorage.getItem(key);
+  }
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify({exportedAt:new Date().toISOString(), origin:location.origin, localStorage:dump}, null, 2)], {type:'application/json'}));
+  a.download=`bustrip-browser-localstorage-${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(a.href);
+};
+window.runBustripDataFinder = async function() {
+  const host = v("histList") || v("reportOutput") || document.querySelector(".content");
+  if (host) host.innerHTML = `<div class="card" style="border-color:#1565c0"><b>Scanning Firestore and browser storage...</b><div style="font-size:11px;color:#777;margin-top:6px">This may take a few seconds. Nothing is deleted or changed.</div></div>`;
+  const results = [];
+  for (const name of RECOVERY_COLLECTIONS) {
+    try {
+      const snap = await getDocs(collection(db, name));
+      const docs = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      results.push({name, ok:true, count:docs.length, docs:docs.slice(0,5)});
+      if (name === "logs" && docs.length && !rawLogs.length) { rawLogs = docs; refreshScopedData(); }
+      if (name === "staff" && docs.length && !rawStaff.length) { rawStaff = docs; refreshScopedData(); }
+      if (name === "vehicles" && docs.length && !rawVehicles.length) { rawVehicles = docs; refreshScopedData(); }
+      if (name === "tax" && docs.length && !rawTax.length) { rawTax = docs; refreshScopedData(); }
+      if (name === "emi" && docs.length && !rawEmi.length) { rawEmi = docs; refreshScopedData(); }
+    } catch(e) {
+      results.push({name, ok:false, count:0, error:e.code || e.message || String(e)});
+    }
+  }
+  const local = scanLocalStorageForBustripData();
+  lastRecoveryScan = {results, local, when:new Date().toISOString(), projectId: firebaseConfig.projectId, currentCompanyId, currentRole};
+  const logsResult = results.find(r=>r.name==="logs");
+  const totalDocs = results.reduce((s,r)=>s+(r.count||0),0);
+  const blocked = results.filter(r=>!r.ok);
+  const rows = results.map(r=>`<tr><td>${r.name}</td><td>${r.ok ? "Readable" : "Blocked/Error"}</td><td>${r.count||0}</td><td>${r.ok ? "" : modSafeText(r.error||"")}</td></tr>`).join("");
+  const samples = results.filter(r=>r.ok && r.count && r.docs?.length).map(r=>`<details style="margin:8px 0"><summary><b>${r.name}</b> sample (${r.count})</summary><pre style="white-space:pre-wrap;background:#f8f9ff;border:1px solid #ddd;padding:10px;border-radius:6px;font-size:11px;max-height:220px;overflow:auto">${modSafeText(JSON.stringify(r.docs, null, 2))}</pre></details>`).join("");
+  const localRows = local.map(x=>`<tr><td>${modSafeText(x.key)}</td><td>${x.type}</td><td>${x.count}</td><td>${x.rawLength} chars</td></tr>`).join("");
+  const diagnosis = !logsResult?.ok
+    ? `Firestore is blocking the logs collection: ${modSafeText(logsResult?.error||"unknown error")}. Publish open temporary recovery rules, then scan again.`
+    : logsResult.count > 0
+      ? `${logsResult.count} log record(s) are readable from Firestore. If History still looks empty, click Force Show All below.`
+      : totalDocs > 0
+        ? `Firestore is readable, but the logs collection has 0 documents. Your old daily entries are likely in another Firebase project, another collection, a backup JSON, or browser localStorage.`
+        : `No documents were found in the checked Firestore collections. This usually means the app is connected to a different Firebase project/database than the one that contains your old records, or the old records were only stored locally/backed up elsewhere.`;
+  if (host) host.innerHTML = `
+    <div class="card" style="border-color:${logsResult?.count ? '#4caf50' : '#e84917'};margin-bottom:14px">
+      <div style="font-size:12px;letter-spacing:2px;color:#e84917;margin-bottom:8px">🛟 DATA RECOVERY DIAGNOSTIC</div>
+      <div style="font-size:13px;color:#1a1a3e;line-height:1.55"><b>Result:</b> ${diagnosis}</div>
+      <div style="font-size:11px;color:#777;margin-top:8px">Project: <b>${firebaseConfig.projectId}</b> · Current account company: <b>${currentCompanyId||'not logged in'}</b> · Role: <b>${currentRole||'—'}</b></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+        <button class="btn-sm" onclick="showAllRecoveredData(); runBustripDataFinder();">Force Show All Readable Records</button>
+        <button class="btn-sm" onclick="downloadRecoveryScanReport()">Download Diagnostic JSON</button>
+        <button class="btn-sm" onclick="exportBrowserLocalData()">Export Browser Local Data</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px"><b>Firestore collection counts</b><div class="mod-table-wrap" style="margin-top:10px"><table class="mod-table"><thead><tr><th>Collection</th><th>Status</th><th>Docs</th><th>Error</th></tr></thead><tbody>${rows}</tbody></table></div></div>
+    <div class="card" style="margin-bottom:14px"><b>Browser localStorage candidates</b>${local.length?`<div class="mod-table-wrap" style="margin-top:10px"><table class="mod-table"><thead><tr><th>Key</th><th>Type</th><th>Items</th><th>Size</th></tr></thead><tbody>${localRows}</tbody></table></div>`:'<div class="empty">No likely Bustrip local browser records found in this browser.</div>'}</div>
+    <div class="card"><b>Readable Firestore samples</b>${samples || '<div class="empty">No samples available.</div>'}</div>`;
+};
+window.downloadRecoveryScanReport = function() {
+  if (!lastRecoveryScan) { alert("Run the Data Finder first."); return; }
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(lastRecoveryScan, null, 2)], {type:'application/json'}));
+  a.download=`bustrip-firestore-diagnostic-${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(a.href);
+};
+
 // ── RENDER HISTORY ──
 function renderHistory() {
-  v("histCount").textContent = `${logs.length} RECORDS · CLICK A ROW TO EDIT`;
-  if (!logs.length) { v("histList").innerHTML='<div class="empty">NO RECORDS YET — ADD YOUR FIRST LOG</div>'; return; }
-  v("histList").innerHTML = logs.map(l => {
+  const rawCount = Array.isArray(rawLogs) ? rawLogs.length : 0;
+  const recoveryOn = localStorage.getItem("bustrip_show_all_data") === "1";
+  v("histCount").textContent = `${logs.length} RECORDS${rawCount && rawCount!==logs.length ? ` · ${rawCount} FOUND IN DATABASE` : ""} · CLICK A ROW TO EDIT`;
+  if (!logs.length) {
+    v("histList").innerHTML = rawCount
+      ? `<div class="empty">${rawCount} records were found in the database, but they are hidden by the current account filter.<br><br><button class="btn-primary" style="max-width:320px;margin:0 auto" onclick="showAllRecoveredData()">SHOW RECOVERED RECORDS</button><br><button class="btn-sm" style="margin-top:10px" onclick="runBustripDataFinder()">RUN DATA FINDER</button></div>`
+      : '<div class="empty">NO RECORDS FOUND IN THIS DATABASE YET<br><br><button class="btn-primary" style="max-width:320px;margin:0 auto" onclick="runBustripDataFinder()">RUN DATA FINDER / RECOVERY SCAN</button><div style="font-size:11px;color:#777;margin-top:10px">This checks Firestore permissions, collection counts, and old browser storage.</div></div>';
+    return;
+  }
+  if (rawCount && rawCount!==logs.length && recoveryOn) {
+    v("histList").innerHTML = `<div class="card" style="margin-bottom:12px;border-color:#f5a623;background:#fff8e1"><b>Recovery view is ON.</b> Showing all records available to this login. <button class="btn-sm" onclick="stopShowAllRecoveredData()">Turn off</button></div>`;
+  } else {
+    v("histList").innerHTML = "";
+  }
+  v("histList").innerHTML += logs.map(l => {
     const tr = l.total_revenue||l.revenue||0;
     const isProfit = l.profit>=0;
     const drivers = [l.driver1,l.driver2,l.cleaner].filter(d=>d?.name)
