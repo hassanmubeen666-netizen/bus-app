@@ -1485,7 +1485,25 @@ window.handleLogoUpload = function(evt) {
   };
   reader.readAsDataURL(file);
 };
-function scopedToCompany(arr) { return arr.filter(r => ownerOf(r) === effectiveCompanyId()); }
+function scopedToCompany(arr) {
+  const eff = effectiveCompanyId();
+  if (!eff) return [];
+
+  // DATA RECOVERY / BACKWARD COMPATIBILITY:
+  // Older Bustrip records were saved before companyId existed. Those records
+  // must never disappear after updates, so admins can still see legacy records
+  // along with their current company records. Platform super admins see all
+  // company data until they choose a specific company from the Companies tab.
+  if (currentIsSuperAdmin && !superAdminViewingCompanyId) return arr.slice();
+
+  return arr.filter(r => {
+    const cid = ownerOf(r);
+    if (cid === eff) return true;
+    const isLegacyRecord = !r.companyId || cid === LEGACY_COMPANY_ID;
+    const canReadLegacy = currentRole === "admin" || currentIsSuperAdmin;
+    return canReadLegacy && isLegacyRecord;
+  });
+}
 
 // Raw = everything Firestore sends us (all companies). The scoped arrays
 // (logs, staff, users, taxRecords, emiRecords, vehicles, accessLogs) are
