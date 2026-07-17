@@ -1,0 +1,61 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isBustripCollection(collectionName) {
+      return collectionName in [
+        // Core accounts / platform admin
+        'users',
+        'settings',
+        'access_log',
+        'company_logos',
+        'company_messages',
+
+        // Daily operations
+        'logs',
+        'staff',
+        'vehicles',
+        'tax',
+        'emi',
+
+        // Driver app / office desk
+        'driver_reports',
+        'leave_requests',
+        'advance_requests',
+        'vehicle_issues',
+        'journey_checkins',
+        'journey_checkin_photos',
+        'driver_assignments',
+        'parcel_receipts',
+        'parcel_receipt_photos',
+        'office_messages',
+        'traffic_delay_evidence',
+        'driver_speed_logs',
+
+        // Finance modules
+        'creditors',
+        'ticket_income_receipts'
+      ];
+    }
+
+    // Public registration page needs to read plan pricing/payment gateway settings.
+    // Bustrip super admin/app also updates settings from inside the app.
+    match /settings/{docId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+    }
+
+    // Main Bustrip collections used by the current app.html and driver app.
+    // Note: this app currently uses custom username/password login, not Firebase Auth,
+    // so these are functional rules for the existing app design.
+    match /{collectionName}/{documentId} {
+      allow read, create, update, delete: if isBustripCollection(collectionName);
+    }
+
+    // Block anything outside the Bustrip collections above.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
