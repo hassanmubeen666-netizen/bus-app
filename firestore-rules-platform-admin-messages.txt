@@ -1,0 +1,52 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isBustripCollection(collectionName) {
+      return collectionName in [
+        'users',
+        'logs',
+        'staff',
+        'vehicles',
+        'tax',
+        'emi',
+        'access_log',
+
+        'driver_reports',
+        'leave_requests',
+        'advance_requests',
+        'vehicle_issues',
+
+        'journey_checkins',
+        'journey_checkin_photos',
+        'driver_assignments',
+
+        'parcel_receipts',
+        'parcel_receipt_photos',
+
+        'office_messages',
+        'traffic_delay_evidence',
+        'driver_speed_logs',
+
+        'creditors',
+        'ticket_income_receipts',
+        'company_messages',
+        'company_logos'
+      ];
+    }
+
+    match /settings/{docId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+    }
+
+    match /{collectionName}/{documentId} {
+      allow read, create, update, delete: if isBustripCollection(collectionName);
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
